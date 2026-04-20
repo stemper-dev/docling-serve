@@ -46,6 +46,15 @@ RUN --mount=type=bind,source=os-packages.txt,target=/tmp/os-packages.txt \
     dnf -y clean all && \
     rm -rf /var/cache/dnf
 
+# Override installed langpack traineddata with tessdata_best (most accurate LSTM models, v4.1.0)
+# Ref: https://github.com/tesseract-ocr/tessdata_best
+RUN dnf -y install --best --nodocs --setopt=install_weak_deps=False git-core && \
+    git clone --depth 1 https://github.com/tesseract-ocr/tessdata_best.git /tmp/tessdata_best && \
+    cp -f /tmp/tessdata_best/*.traineddata /usr/share/tesseract/tessdata/ && \
+    cp -rf /tmp/tessdata_best/script /usr/share/tesseract/tessdata/ && \
+    rm -rf /tmp/tessdata_best && \
+    dnf -y remove git-core && dnf -y clean all && rm -rf /var/cache/dnf
+
 COPY --from=mimalloc /opt/app-root/src/mimalloc/out/release/libmimalloc.so /usr/local/lib/libmimalloc.so
 RUN /usr/bin/fix-permissions /opt/app-root/src/.cache
 
