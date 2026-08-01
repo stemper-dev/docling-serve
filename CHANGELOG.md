@@ -1,3 +1,266 @@
+## [v1.29.0](https://github.com/docling-project/docling-serve/releases/tag/v1.29.0) - 2026-07-30
+
+### Feature
+
+* Support for new chunking options and multiple targets ([#664](https://github.com/docling-project/docling-serve/issues/664)) ([`8bc09de`](https://github.com/docling-project/docling-serve/commit/8bc09deeeaa919923d33ab67ff27705ce4ce492a))
+
+### Docling libraries included in this release:
+- docling-core 2.88.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 3.2.0
+- docling-mcp 2.2.1
+- docling-parse 7.8.1
+- docling-serve 1.29.0
+- docling-slim 2.117.0
+
+## [v1.28.0](https://github.com/docling-project/docling-serve/releases/tag/v1.28.0) - 2026-07-27
+
+### Feature
+
+* Support plugin-defined connector sources and targets ([#660](https://github.com/docling-project/docling-serve/issues/660)) ([`a62ec9b`](https://github.com/docling-project/docling-serve/commit/a62ec9b0e89f8e5e06e53b73e8314401d069f4d1))
+
+### Fix
+
+* Support for file inputs in single convert endpoints ([#663](https://github.com/docling-project/docling-serve/issues/663)) ([`f70eb06`](https://github.com/docling-project/docling-serve/commit/f70eb06e157043721816e4ed2a49bc1b65bb5aca))
+* **CLI:** Docling version resolution ([#659](https://github.com/docling-project/docling-serve/issues/659)) ([`cc3fca4`](https://github.com/docling-project/docling-serve/commit/cc3fca47490762c5f674c498a6621bd22a40c4bd))
+* Add missing format-opendocument extra for OpenDocument support ([#658](https://github.com/docling-project/docling-serve/issues/658)) ([`36a5f07`](https://github.com/docling-project/docling-serve/commit/36a5f07d5286bd1bc7bb1dee89d46cb8ee4be882))
+
+### Docling libraries included in this release:
+- docling-core 2.87.1
+- docling-ibm-models 3.13.3
+- docling-jobkit 3.0.0
+- docling-mcp 2.1.0
+- docling-parse 7.8.1
+- docling-serve 1.28.0
+- docling-slim 2.115.0
+
+## [v1.27.0](https://github.com/docling-project/docling-serve/releases/tag/v1.27.0) - 2026-07-20
+
+### Feature
+
+* Accept GCS, Azure Blob, and Google Drive sources/targets ([#652](https://github.com/docling-project/docling-serve/issues/652)) ([`1b430ca`](https://github.com/docling-project/docling-serve/commit/1b430caf9ed0f9ff735433ed19f1a9043f222bd8))
+* Add allowed_source_types policy control ([#651](https://github.com/docling-project/docling-serve/issues/651)) ([`193b7ce`](https://github.com/docling-project/docling-serve/commit/193b7ce2a1b6d26c6ef2fa58c9a71edc0ff53d70))
+
+### Docling libraries included in this release:
+- docling-core 2.87.1
+- docling-ibm-models 3.13.3
+- docling-jobkit 2.1.0
+- docling-mcp 2.1.0
+- docling-parse 7.8.1
+- docling-serve 1.27.0
+- docling-slim 2.113.0
+
+## [v1.26.0](https://github.com/docling-project/docling-serve/releases/tag/v1.26.0) - 2026-06-29
+
+### Feature
+
+* Upgrade deps and remove experimental kfp ([#643](https://github.com/docling-project/docling-serve/issues/643)) ([`3f63843`](https://github.com/docling-project/docling-serve/commit/3f6384301fb0aed6790870a674f29b628895af08))
+
+### Fix
+
+* **metrics:** Expose Ray task-lifecycle counters ([#641](https://github.com/docling-project/docling-serve/issues/641)) ([`4ed7a8c`](https://github.com/docling-project/docling-serve/commit/4ed7a8ce2be06b50fd3544c74f78a7247c4f1b8a))
+
+### Docling libraries included in this release:
+- docling-core 2.85.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 2.0.0
+- docling-mcp 2.1.0
+- docling-parse 7.2.0
+- docling-serve 1.26.0
+- docling-slim 2.107.0
+
+## [v1.25.0](https://github.com/docling-project/docling-serve/releases/tag/v1.25.0) - 2026-06-22
+
+### Feature
+
+* Surface confidence on convert response ([#638](https://github.com/docling-project/docling-serve/issues/638)) ([`23ad1ff`](https://github.com/docling-project/docling-serve/commit/23ad1ffceed7ab140073e6d76617c967f379de90))
+
+### Fix
+
+* **ui:** Docling package not found blocking UI ([#640](https://github.com/docling-project/docling-serve/issues/640)) ([`7826d5e`](https://github.com/docling-project/docling-serve/commit/7826d5e76bd48e2d312b02170863b077170158a6))
+
+### Docling libraries included in this release:
+- docling-core 2.82.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 1.23.1
+- docling-mcp 2.1.0
+- docling-parse 6.2.0
+- docling-serve 1.25.0
+- docling-slim 2.104.0
+
+## [v1.24.0](https://github.com/docling-project/docling-serve/releases/tag/v1.24.0) - 2026-06-15
+
+### Feature
+
+* Support configurable RQ queue name (#620) ([#621](https://github.com/docling-project/docling-serve/issues/621)) ([`74b5848`](https://github.com/docling-project/docling-serve/commit/74b5848a179ccaee14d9c7195bd04cd12e0d0dbc))
+
+### Fix
+
+* Resolve omitted convert target from server policy ([#635](https://github.com/docling-project/docling-serve/issues/635)) ([`9a4288d`](https://github.com/docling-project/docling-serve/commit/9a4288de866336cee4a31a099f198507dd0e17ef))
+* Construct s3_presigned_config in RQ worker entrypoint ([#634](https://github.com/docling-project/docling-serve/issues/634)) ([`eb2f35c`](https://github.com/docling-project/docling-serve/commit/eb2f35c74ea9fbc03529493ae01079a237ed27e4))
+
+### Docling libraries included in this release:
+- docling-core 2.82.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 1.23.1
+- docling-mcp 2.1.0
+- docling-parse 6.2.0
+- docling-serve 1.24.0
+- docling-slim 2.102.2
+
+## [v1.23.0](https://github.com/docling-project/docling-serve/releases/tag/v1.23.0) - 2026-06-12
+
+### Feature
+
+* Add settings for coordinator and converter max_replicas_per_node ([#629](https://github.com/docling-project/docling-serve/issues/629)) ([`b67600e`](https://github.com/docling-project/docling-serve/commit/b67600ee99a2e841b7bd8d719fbb770152d338b3))
+
+### Fix
+
+* Updated dependencies ([#632](https://github.com/docling-project/docling-serve/issues/632)) ([`21a3c02`](https://github.com/docling-project/docling-serve/commit/21a3c0279758fb6a929fcae10fc90afed3689c5f))
+* Correctly allow floating values for target_requests_per_replica ([#631](https://github.com/docling-project/docling-serve/issues/631)) ([`1b12f00`](https://github.com/docling-project/docling-serve/commit/1b12f002e623da296a27f06de18ff92131e25a36))
+* Enforce tenant ownership on task read endpoints ([#628](https://github.com/docling-project/docling-serve/issues/628)) ([`7a1eaac`](https://github.com/docling-project/docling-serve/commit/7a1eaac1dcaed6758dba84328249a4c594bca646))
+* Supervise orchestrator queue processor and harden WebSocket status push ([#630](https://github.com/docling-project/docling-serve/issues/630)) ([`7c04b5d`](https://github.com/docling-project/docling-serve/commit/7c04b5d9a1bb7e5dbc72d751b6432ac60a7cab9d))
+
+### Docling libraries included in this release:
+- docling-core 2.82.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 1.23.0
+- docling-mcp 2.1.0
+- docling-parse 6.2.0
+- docling-serve 1.23.0
+- docling-slim 2.102.1
+
+## [v1.22.1](https://github.com/docling-project/docling-serve/releases/tag/v1.22.1) - 2026-06-11
+
+### Fix
+
+* Normalize include_images options when using image_export_mode `placeholder` ([#626](https://github.com/docling-project/docling-serve/issues/626)) ([`ed99827`](https://github.com/docling-project/docling-serve/commit/ed998270730172801e05a1862623cf1aca170869))
+
+### Docling libraries included in this release:
+- docling-core 2.81.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 1.22.0
+- docling-mcp 2.1.0
+- docling-parse 6.2.0
+- docling-serve 1.22.1
+- docling-slim 2.101.0
+
+## [v1.22.0](https://github.com/docling-project/docling-serve/releases/tag/v1.22.0) - 2026-06-09
+
+### Feature
+
+* Add config and policy for `allowed_target_types` ([#625](https://github.com/docling-project/docling-serve/issues/625)) ([`95039ce`](https://github.com/docling-project/docling-serve/commit/95039ce0e0446a7413897f23fb9f0e4e5740e2be))
+* Add PreSignedUrlTarget, batch convert endpoint and improved failure handling ([#623](https://github.com/docling-project/docling-serve/issues/623)) ([`14b6c08`](https://github.com/docling-project/docling-serve/commit/14b6c081d8c7fc5a771544fa6c0340de0662e6bd))
+
+### Docling libraries included in this release:
+- docling-core 2.79.0
+- docling-ibm-models 3.13.3
+- docling-jobkit 1.21.0
+- docling-mcp 2.1.0
+- docling-parse 6.2.0
+- docling-serve 1.22.0
+- docling-slim 2.99.0
+
+## [v1.21.0](https://github.com/docling-project/docling-serve/releases/tag/v1.21.0) - 2026-06-01
+
+### Feature
+
+* Upgrade docling deps [docling-parse v6, etc] ([#619](https://github.com/docling-project/docling-serve/issues/619)) ([`10d2f02`](https://github.com/docling-project/docling-serve/commit/10d2f0250b0239e7e509a9c230a78607bd70df81))
+* Add support for ROCm 7.2 ([#618](https://github.com/docling-project/docling-serve/issues/618)) ([`b9cb2b3`](https://github.com/docling-project/docling-serve/commit/b9cb2b382c2b7ee9fff46e26cdc0dc7f92534588))
+* Add JSON logging and request header propagation ([#617](https://github.com/docling-project/docling-serve/issues/617)) ([`eca11a9`](https://github.com/docling-project/docling-serve/commit/eca11a93fddd64b001a4f3bdedb234b62807df29))
+
+### Docling libraries included in this release:
+- docling 2.96.1
+- docling-core 2.78.0
+- docling-ibm-models 3.13.2
+- docling-jobkit 1.20.1
+- docling-mcp 2.0.1
+- docling-parse 6.2.0
+- docling-serve 1.21.0
+- docling-slim 2.96.1
+
+## [v1.20.0](https://github.com/docling-project/docling-serve/releases/tag/v1.20.0) - 2026-05-21
+
+### Feature
+
+* Expose docs metadata in callbacks ([#612](https://github.com/docling-project/docling-serve/issues/612)) ([`ca1cc9f`](https://github.com/docling-project/docling-serve/commit/ca1cc9f525ae405c260e02d26a8ff63128f81e66))
+
+### Documentation
+
+* Fix docker pull README.md example ([#603](https://github.com/docling-project/docling-serve/issues/603)) ([`75a35ec`](https://github.com/docling-project/docling-serve/commit/75a35ecd49e16a11ac59801bd3cccd73d2106fe3))
+
+### Docling libraries included in this release:
+- docling 2.95.0
+- docling-core 2.77.0
+- docling-ibm-models 3.13.2
+- docling-jobkit 1.20.0
+- docling-mcp 2.0.1
+- docling-parse 5.11.0
+- docling-serve 1.20.0
+- docling-slim 2.95.0
+
+## [v1.19.0](https://github.com/docling-project/docling-serve/releases/tag/v1.19.0) - 2026-05-20
+
+### Feature
+
+* Control error detail of public API responses ([#609](https://github.com/docling-project/docling-serve/issues/609)) ([`55dab06`](https://github.com/docling-project/docling-serve/commit/55dab0694f0d83be1cd60295f8fbd415639cb904))
+* Support for server side page slicing and concurrency for long PDFs ([#585](https://github.com/docling-project/docling-serve/issues/585)) ([`df28b48`](https://github.com/docling-project/docling-serve/commit/df28b484dd157e788074f3fc465a3e47cfc551ba))
+
+### Documentation
+
+* **security:** Add GitHub Private Vulnerability Reporting ([#601](https://github.com/docling-project/docling-serve/issues/601)) ([`3bddacc`](https://github.com/docling-project/docling-serve/commit/3bddacc81422c5bcccb9d5a4ded7e9ac7d558bce))
+
+### Docling libraries included in this release:
+- docling 2.94.0
+- docling-core 2.77.0
+- docling-ibm-models 3.13.2
+- docling-jobkit 1.19.1
+- docling-mcp 2.0.1
+- docling-parse 5.11.0
+- docling-serve 1.19.0
+- docling-slim 2.94.0
+
+## [v1.18.0](https://github.com/docling-project/docling-serve/releases/tag/v1.18.0) - 2026-05-07
+
+### Feature
+
+* Update docling dependencies ([#599](https://github.com/docling-project/docling-serve/issues/599)) ([`c1a3e31`](https://github.com/docling-project/docling-serve/commit/c1a3e3159d1f8225883368ae4ad2f33fa6f99b90))
+
+### Fix
+
+* Fail server launch if the config file is bogus ([#598](https://github.com/docling-project/docling-serve/issues/598)) ([`c5a4332`](https://github.com/docling-project/docling-serve/commit/c5a43320e6d24afea4acdccb23aeb2ffb3196710))
+
+### Docling libraries included in this release:
+- docling 2.93.0
+- docling-core 2.74.1
+- docling-ibm-models 3.13.2
+- docling-jobkit 1.18.1
+- docling-mcp 1.3.4
+- docling-parse 5.10.1
+- docling-serve 1.18.0
+- docling-slim 2.93.0
+
+## [v1.17.0](https://github.com/docling-project/docling-serve/releases/tag/v1.17.0) - 2026-04-24
+
+### Feature
+
+* Docling v2.91.0 upgrade and other deps ([#589](https://github.com/docling-project/docling-serve/issues/589)) ([`babb6ea`](https://github.com/docling-project/docling-serve/commit/babb6ea404209906be128d0f748566d04cb4608f))
+* **ray:** Add control for graceful shutdown timeout of actors and improved dispatcher ([#584](https://github.com/docling-project/docling-serve/issues/584)) ([`2a1e8c2`](https://github.com/docling-project/docling-serve/commit/2a1e8c2a5a0a65b9efc4f47df535a01a4f2a9a5b))
+* Move client SDK to docling ([#575](https://github.com/docling-project/docling-serve/issues/575)) ([`683eeca`](https://github.com/docling-project/docling-serve/commit/683eecae3e2d503e05d3c106fd169164db1cbe5d))
+
+### Fix
+
+* Ray dispatcher improvements ([#579](https://github.com/docling-project/docling-serve/issues/579)) ([`7991c05`](https://github.com/docling-project/docling-serve/commit/7991c05698c1ee5de2edd6f8a3906366c16e2160))
+
+### Docling libraries included in this release:
+- docling 2.91.0
+- docling-core 2.74.1
+- docling-ibm-models 3.13.2
+- docling-jobkit 1.18.0
+- docling-mcp 1.3.4
+- docling-parse 5.10.0
+- docling-serve 1.17.0
+
 ## [v1.16.1](https://github.com/docling-project/docling-serve/releases/tag/v1.16.1) - 2026-04-09
 
 ### Fix

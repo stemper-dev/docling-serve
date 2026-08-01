@@ -1,17 +1,26 @@
 import enum
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any, Optional, Union
 
 import yaml
-from pydantic import AnyUrl, Field, field_validator, model_validator
+from pydantic import (
+    AliasChoices,
+    Field,
+    PositiveFloat,
+    field_validator,
+    model_validator,
+)
 from pydantic_settings import (
     BaseSettings,
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
 from typing_extensions import Self
+
+_log = logging.getLogger(__name__)
 
 
 class UvicornSettings(BaseSettings):
@@ -37,9 +46,13 @@ class LogLevel(str, enum.Enum):
     DEBUG = "DEBUG"
 
 
+class LogFormat(str, enum.Enum):
+    TEXT = "text"
+    JSON = "json"
+
+
 class AsyncEngine(str, enum.Enum):
     LOCAL = "local"
-    KFP = "kfp"
     RQ = "rq"
     RAY = "ray"
 
@@ -65,7 +78,9 @@ class YamlConfigSettingsSource(PydanticBaseSettingsSource):
 
         config_path = Path(config_path_str)
         if not config_path.exists():
-            return {}
+            raise FileNotFoundError(
+                f"Config file not found: {config_path}. Fix the environment variable DOCLING_SERVE_CONFIG_FILE or unset it."
+            )
 
         try:
             with open(config_path) as f:
@@ -74,10 +89,17 @@ class YamlConfigSettingsSource(PydanticBaseSettingsSource):
                 elif config_path.suffix == ".json":
                     data = json.load(f)
                 else:
-                    return {}
-            return data if isinstance(data, dict) else {}
-        except Exception:
-            return {}
+                    raise ValueError(
+                        f"Unsupported config file format: {config_path.suffix}. Only .yaml, .yml, and .json are supported."
+                    )
+            if not isinstance(data, dict):
+                raise ValueError(
+                    f"Config file must contain a dictionary/object, got {type(data).__name__}"
+                )
+            return data
+        except Exception as err:
+            _log.error(f"Error parsing the config file {config_path}")
+            raise RuntimeError(f"Failed to parse config file {config_path}") from err
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}()"
@@ -86,6 +108,7 @@ class YamlConfigSettingsSource(PydanticBaseSettingsSource):
 class DoclingServeSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="DOCLING_SERVE_",
+        env_prefix_target="all",
         env_file=".env",
         env_parse_none_str="",
         extra="allow",
@@ -97,6 +120,8 @@ class DoclingServeSettings(BaseSettings):
     enable_ui: bool = False
     api_host: str = "localhost"
     log_level: Optional[LogLevel] = None
+    log_format: LogFormat = LogFormat.TEXT
+    log_header_prefix: str = "X-Docling-Log-"
     artifacts_path: Optional[Path] = None
     static_path: Optional[Path] = None
     scratch_path: Optional[Path] = None
@@ -114,12 +139,28 @@ class DoclingServeSettings(BaseSettings):
     allow_custom_ocr_config: bool = False
     show_version_info: bool = True
     enable_management_endpoints: bool = False
+    debug_error_details: bool = False
 
     api_key: str = ""
 
     max_document_timeout: float = 3_600 * 24 * 7  # 7 days
     max_num_pages: int = sys.maxsize
     max_file_size: int = sys.maxsize
+    max_sources_per_request: int = 3
+
+    # Image export policy
+    allowed_image_export_modes: Optional[list[str]] = None  # None = all modes allowed
+    max_images_scale: float = 2.0
+
+    # Artifact storage (required for PresignedUrlTarget)
+    artifact_storage_enabled: bool = False
+    artifact_storage_endpoint: str = ""
+    artifact_storage_verify_ssl: bool = True
+    artifact_storage_bucket: str = ""
+    artifact_storage_access_key: str = ""
+    artifact_storage_secret_key: str = ""
+    artifact_storage_key_prefix: str = "converted/"
+    artifact_storage_presign_ttl_seconds: int = 3600
 
     # Threading pipeline
     queue_max_size: Optional[int] = None
@@ -142,6 +183,7 @@ class DoclingServeSettings(BaseSettings):
     eng_loc_share_models: bool = False
     # RQ engine
     eng_rq_redis_url: str = ""
+    eng_rq_queue_name: str = "convert"
     eng_rq_results_prefix: str = "docling:results"
     eng_rq_sub_channel: str = "docling:updates"
     eng_rq_results_ttl: int = 3_600 * 4  # 4 hours default
@@ -157,16 +199,6 @@ class DoclingServeSettings(BaseSettings):
     eng_rq_redis_gate_status_poll_wait_timeout: float = 5.0
     eng_rq_zombie_reaper_interval: float = 300.0
     eng_rq_zombie_reaper_max_age: float = 3600.0
-    # KFP engine
-    eng_kfp_endpoint: Optional[AnyUrl] = None
-    eng_kfp_token: Optional[str] = None
-    eng_kfp_ca_cert_path: Optional[str] = None
-    eng_kfp_self_callback_endpoint: Optional[str] = None
-    eng_kfp_self_callback_token_path: Optional[Path] = None
-    eng_kfp_self_callback_ca_cert_path: Optional[Path] = None
-
-    eng_kfp_experimental: bool = False
-
     # Fair Ray engine
     # Redis Configuration
     eng_ray_redis_url: str = ""
@@ -186,7 +218,8 @@ class DoclingServeSettings(BaseSettings):
     eng_ray_sub_channel: str = "docling:ray:updates"
 
     # Fair Dispatcher
-    eng_ray_dispatcher_interval: float = 2.0
+    eng_ray_dispatcher_interval: float = 30.0
+    eng_ray_supervisor_poll_interval: float = 5.0
 
     # Per-User Dispatcher Limits
     eng_ray_max_concurrent_tasks: int = 5
@@ -207,13 +240,37 @@ class DoclingServeSettings(BaseSettings):
     # Ray Serve Autoscaling
     eng_ray_min_actors: int = 1
     eng_ray_max_actors: int = 10
-    eng_ray_target_requests_per_replica: int = 1
+    eng_ray_target_requests_per_replica: PositiveFloat = 1.0
     # Hard cap on concurrent in-flight requests per replica.
     # None -> follow eng_ray_target_requests_per_replica.
     eng_ray_max_ongoing_requests_per_replica: Optional[int] = None
+    # Hard cap on converter Serve replicas per Ray node. None -> no cap.
+    eng_ray_converter_max_replicas_per_node: Optional[int] = None
     eng_ray_upscale_delay_s: float = 30.0
     eng_ray_downscale_delay_s: float = 600.0
-    eng_ray_num_cpus_per_actor: float = 1.0
+    # None -> use Ray Serve defaults.
+    eng_ray_graceful_shutdown_wait_loop_s: Optional[float] = None
+    eng_ray_graceful_shutdown_timeout_s: Optional[float] = None
+    eng_ray_converter_actor_num_cpus: float = Field(
+        1.0,
+        validation_alias=AliasChoices(
+            "eng_ray_converter_actor_num_cpus",
+            "eng_ray_num_cpus_per_actor",
+        ),
+    )
+    eng_ray_enable_pdf_page_slice_fanout: bool = False
+    eng_ray_max_page_slice_size: int = 32
+    # Unset means "default to eng_ray_max_concurrent_tasks" at runtime.
+    # Explicit values override that default but fan-out should never be unbounded.
+    eng_ray_max_page_slice_parallelism: Optional[int] = None
+    eng_ray_coordinator_min_actors: Optional[int] = None
+    eng_ray_coordinator_max_actors: Optional[int] = None
+    eng_ray_coordinator_target_requests_per_replica: Optional[PositiveFloat] = None
+    eng_ray_coordinator_max_ongoing_requests_per_replica: int = 8
+    # Hard cap on coordinator Serve replicas per Ray node. None -> no cap.
+    eng_ray_coordinator_max_replicas_per_node: Optional[int] = None
+    eng_ray_coordinator_actor_num_cpus: float = 0.25
+    eng_ray_coordinator_actor_memory_request: Optional[str] = None
 
     # Fault Tolerance & Retry
     eng_ray_max_task_retries: int = 3
@@ -228,12 +285,22 @@ class DoclingServeSettings(BaseSettings):
     eng_ray_task_timeout: Optional[float] = 3600.0
     eng_ray_document_timeout: Optional[float] = 300.0
     eng_ray_redis_operation_timeout: float = 30.0
+    eng_ray_dispatcher_rpc_timeout: float = 5.0
+    eng_ray_liveness_fail_after: float = 90.0
 
     # Health Checks
     eng_ray_enable_heartbeat: bool = True
 
     # Resource Management & Memory Monitoring
-    eng_ray_memory_limit_per_actor: Optional[str] = None
+    eng_ray_converter_actor_memory_request: Optional[str] = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "eng_ray_converter_actor_memory_request",
+            "eng_ray_memory_limit_per_actor",
+        ),
+    )
+    eng_ray_dispatcher_num_cpus: float = 0.25
+    eng_ray_dispatcher_memory_request: Optional[str] = None
     eng_ray_object_store_memory: Optional[str] = None
     eng_ray_enable_oom_protection: bool = True
     eng_ray_memory_warning_threshold: float = 0.9
@@ -304,6 +371,15 @@ class DoclingServeSettings(BaseSettings):
     custom_ocr_presets: dict[str, Any] = Field(default_factory=dict)
     allowed_ocr_kinds: Optional[list[str]] = None
 
+    # Chunking Control
+    default_chunking_preset: str = "granite_embedding_278m"
+    allowed_chunking_presets: Optional[list[str]] = None
+    custom_chunking_presets: dict[str, Any] = Field(default_factory=dict)
+
+    # Source / Target Control
+    allowed_source_types: Optional[list[str]] = None
+    allowed_target_types: Optional[list[str]] = None
+
     @classmethod
     def settings_customise_sources(
         cls,
@@ -333,6 +409,7 @@ class DoclingServeSettings(BaseSettings):
         "custom_table_structure_presets",
         "custom_layout_presets",
         "custom_ocr_presets",
+        "custom_chunking_presets",
         mode="before",
     )
     @classmethod
@@ -366,6 +443,10 @@ class DoclingServeSettings(BaseSettings):
         "allowed_layout_presets",
         "allowed_ocr_presets",
         "allowed_ocr_kinds",
+        "allowed_chunking_presets",
+        "allowed_source_types",
+        "allowed_target_types",
+        "allowed_image_export_modes",
         mode="before",
     )
     @classmethod
@@ -398,19 +479,22 @@ class DoclingServeSettings(BaseSettings):
             return v.upper()
         return v
 
+    @model_validator(mode="before")
+    @classmethod
+    def warn_deprecated_ray_settings(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            deprecated_keys = {
+                "eng_ray_num_cpus_per_actor": "eng_ray_converter_actor_num_cpus",
+                "eng_ray_memory_limit_per_actor": "eng_ray_converter_actor_memory_request",
+            }
+            for old_key, new_key in deprecated_keys.items():
+                if old_key in data:
+                    _log.warning("%s is deprecated; use %s instead.", old_key, new_key)
+
+        return data
+
     @model_validator(mode="after")
     def engine_settings(self) -> Self:
-        # Validate KFP engine settings
-        if self.eng_kind == AsyncEngine.KFP:
-            if self.eng_kfp_endpoint is None:
-                raise ValueError("KFP endpoint is required when using the KFP engine.")
-
-        if self.eng_kind == AsyncEngine.KFP:
-            if not self.eng_kfp_experimental:
-                raise ValueError(
-                    "KFP is not yet working. To enable the development version, you must set DOCLING_SERVE_ENG_KFP_EXPERIMENTAL=true."
-                )
-
         if self.eng_kind == AsyncEngine.RQ:
             if not self.eng_rq_redis_url:
                 raise ValueError("RQ Redis url is required when using the RQ engine.")

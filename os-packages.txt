@@ -4,3 +4,4 @@ tesseract-langpack-*
 leptonica-devel
 libglvnd-glx
 glib2
+libatomic

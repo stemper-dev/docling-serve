@@ -11,7 +11,6 @@ import uvicorn
 from rich.console import Console
 
 from docling_serve.settings import docling_serve_settings, uvicorn_settings
-from docling_serve.storage import get_scratch
 
 warnings.filterwarnings(action="ignore", category=UserWarning, module="pydantic|torch")
 warnings.filterwarnings(action="ignore", category=FutureWarning, module="easyocr")
@@ -32,7 +31,7 @@ def version_callback(value: bool) -> None:
     if value:
         docling_serve_version = importlib.metadata.version("docling-serve")
         docling_jobkit_version = importlib.metadata.version("docling-jobkit")
-        docling_version = importlib.metadata.version("docling")
+        docling_version = importlib.metadata.version("docling-slim")
         docling_core_version = importlib.metadata.version("docling-core")
         docling_ibm_models_version = importlib.metadata.version("docling-ibm-models")
         docling_parse_version = importlib.metadata.version("docling-parse")
@@ -66,21 +65,25 @@ def callback(
         ),
     ] = 0,
 ) -> None:
+    from docling_serve.logging_config import setup_logging
+
     # Priority: CLI flag > ENV variable > default (WARNING)
     if verbose > 0:
         # CLI flag takes precedence
-        if verbose == 1:
-            logging.basicConfig(level=logging.INFO)
-        elif verbose >= 2:
-            logging.basicConfig(level=logging.DEBUG)
+        log_level = "INFO" if verbose == 1 else "DEBUG"
     elif docling_serve_settings.log_level:
         # Use ENV variable if CLI flag not provided
-        logging.basicConfig(
-            level=getattr(logging, docling_serve_settings.log_level.value)
-        )
+        log_level = docling_serve_settings.log_level.value
     else:
         # Default to WARNING
-        logging.basicConfig(level=logging.WARNING)
+        log_level = "WARNING"
+
+    # Setup logging with configured format
+    setup_logging(
+        log_format=docling_serve_settings.log_format.value,
+        log_level=log_level,
+        header_prefix=docling_serve_settings.log_header_prefix,
+    )
 
 
 def _run(
@@ -146,6 +149,7 @@ def _run(
     console.print("Logs:")
 
     # Launch the server
+    # Disable uvicorn's default logging config so our custom logging is used
     uvicorn.run(
         app="docling_serve.app:create_app",
         factory=True,
@@ -159,6 +163,7 @@ def _run(
         ssl_certfile=uvicorn_settings.ssl_certfile,
         ssl_keyfile=uvicorn_settings.ssl_keyfile,
         ssl_keyfile_password=uvicorn_settings.ssl_keyfile_password,
+        log_config=None,  # Disable uvicorn's logging config to use our custom setup
     )
 
 
@@ -382,41 +387,30 @@ def rq_worker() -> Any:
     from docling_jobkit.convert.manager import (
         DoclingConverterManagerConfig,
     )
-    from docling_jobkit.orchestrators.rq.orchestrator import (
-        RQOrchestrator,
-        RQOrchestratorConfig,
-    )
+    from docling_jobkit.orchestrators.rq.orchestrator import RQOrchestrator
 
+    from docling_serve.logging_config import setup_logging
+    from docling_serve.orchestrator_factory import _build_rq_config
     from docling_serve.rq_instrumentation import setup_rq_worker_instrumentation
     from docling_serve.rq_worker_instrumented import InstrumentedRQWorker
 
     # Configure logging for RQ worker
-    if docling_serve_settings.log_level:
-        logging.basicConfig(
-            level=getattr(logging, docling_serve_settings.log_level.value)
-        )
-    else:
-        logging.basicConfig(level=logging.WARNING)
+    log_level = (
+        docling_serve_settings.log_level.value
+        if docling_serve_settings.log_level
+        else "WARNING"
+    )
+    setup_logging(
+        log_format=docling_serve_settings.log_format.value,
+        log_level=log_level,
+        header_prefix=docling_serve_settings.log_header_prefix,
+    )
 
     # Set up OpenTelemetry for the worker process
     if docling_serve_settings.otel_enable_traces:
         setup_rq_worker_instrumentation()
 
-    rq_config = RQOrchestratorConfig(
-        redis_url=docling_serve_settings.eng_rq_redis_url,
-        results_prefix=docling_serve_settings.eng_rq_results_prefix,
-        sub_channel=docling_serve_settings.eng_rq_sub_channel,
-        scratch_dir=get_scratch(),
-        results_ttl=docling_serve_settings.eng_rq_results_ttl,
-        failure_ttl=docling_serve_settings.eng_rq_failure_ttl,
-        redis_max_connections=docling_serve_settings.eng_rq_redis_max_connections,
-        redis_socket_timeout=docling_serve_settings.eng_rq_redis_socket_timeout,
-        redis_socket_connect_timeout=docling_serve_settings.eng_rq_redis_socket_connect_timeout,
-        redis_gate_concurrency=docling_serve_settings.eng_rq_redis_gate_concurrency,
-        redis_gate_reserved_connections=docling_serve_settings.eng_rq_redis_gate_reserved_connections,
-        redis_gate_wait_timeout=docling_serve_settings.eng_rq_redis_gate_wait_timeout,
-        redis_gate_status_poll_wait_timeout=docling_serve_settings.eng_rq_redis_gate_status_poll_wait_timeout,
-    )
+    rq_config = _build_rq_config()
 
     cm_config = DoclingConverterManagerConfig(
         artifacts_path=docling_serve_settings.artifacts_path,
@@ -474,6 +468,10 @@ def rq_worker() -> Any:
         custom_ocr_presets=docling_serve_settings.custom_ocr_presets,
         allowed_ocr_kinds=docling_serve_settings.allowed_ocr_kinds,
         allow_custom_ocr_config=docling_serve_settings.allow_custom_ocr_config,
+        # Chunking Control
+        default_chunking_preset=docling_serve_settings.default_chunking_preset,
+        allowed_chunking_presets=docling_serve_settings.allowed_chunking_presets,
+        custom_chunking_presets=docling_serve_settings.custom_chunking_presets,
     )
 
     # Create worker with instrumentation
